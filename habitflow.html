@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HabitFlow">
+    
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%232196f3%22/><text y=%22.9em%22 font-size=%2290%22>🍅</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%232196f3%22/><text y=%22.9em%22 font-size=%2290%22>🍅</text></svg>">
+
+    <title>HabitFlow</title>
+    <style>
+        :root {
+            --c-blue: #2196f3;
+            --c-purple: #9c27b0;
+            --c-red: #d32f2f;
+            --c-bg: #1a1a1a;
+            --c-text: #ffffff;
+        }
+
+        html, body {
+            min-height: 20px;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background: var(--c-bg);
+            color: var(--c-text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- SETUP SCREEN (Compact) --- */
+        #setup {
+            display: flex;
+            flex-direction: column;
+            width: 100%; height: 100%;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #222;
+        }
+
+        .setup-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .setup-group {
+            display: flex; align-items: center; gap: 4px;
+        }
+
+        label { font-size: 11px; color: #888; text-transform: uppercase; font-weight: bold;}
+
+        .setup-explanation {
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.5;
+            max-width: 400px;
+            padding: 0 20px;
+        }
+
+        input {
+            width: 35px;
+            background: #333; border: 1px solid #444;
+            color: white; padding: 4px;
+            text-align: center; font-size: 13px;
+            border-radius: 4px;
+        }
+
+        button.start-btn {
+            background: var(--c-blue); color: white; border: none;
+            padding: 4px 12px; border-radius: 4px;
+            font-size: 12px; font-weight: bold; cursor: pointer;
+            text-transform: uppercase;
+        }
+        button.settings-btn {
+            background: #444; color: white; border: none;
+            padding: 4px 8px; border-radius: 4px;
+            font-size: 12px; cursor: pointer;
+        }
+        button:hover { opacity: 0.9; }
+
+        /* --- TIMER SCREEN (The Ribbon) --- */
+        #timer-ui {
+            display: none;
+            position: relative;
+            width: 100%; height: 100%;
+            background: #000;
+            cursor: pointer;
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--c-blue);
+            transition: width 1s linear, background-color 1s ease;
+        }
+
+        .marker {
+            position: absolute; top: 0; bottom: 0; width: 2px;
+            background: rgba(255,255,255,0.3);
+            pointer-events: none; z-index: 10;
+        }
+
+        /* --- TICK MARKS --- */
+        #tick-container {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 100%; pointer-events: none; z-index: 15;
+        }
+        .tick {
+            position: absolute; bottom: 0; width: 1px;
+            background: rgba(255,255,255,0.4);
+        }
+        .tick-1min { height: 4px; }
+        .tick-5min { height: 8px; background: rgba(255,255,255,0.6); }
+
+        /* --- ZONE LABELS --- */
+        .zone-label {
+            position: absolute;
+            top: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 32px;
+            font-weight: normal;
+            color: rgba(255,255,255,0.25);
+            pointer-events: none;
+            z-index: 18;
+        }
+        #elapsed-timer {
+            position: absolute;
+            top: 0; bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 32px;
+            font-weight: normal;
+            color: rgba(255,255,255,0.25);
+            pointer-events: none;
+            z-index: 18;
+        }
+
+        /* --- FLASHING ANIMATION --- */
+        @keyframes flash-purple-red {
+            0% { background-color: var(--c-purple); }
+            50% { background-color: var(--c-red); }
+            100% { background-color: var(--c-purple); }
+        }
+        .flashing { animation: flash-purple-red 2s infinite ease-in-out; }
+
+        /* --- ACTIVITY MENU (Grid) --- */
+        #activity-menu {
+            display: none;
+            height: 100%; width: 100%;
+            background: #222;
+        }
+        .act-btn {
+            flex: 1;
+            border: none; border-right: 1px solid #333;
+            background: transparent; color: white;
+            font-size: 11px; font-weight: bold;
+            cursor: pointer;
+            padding: 0 5px;
+            white-space: nowrap;
+        }
+        .act-btn:last-child { border-right: none; background: #330000; color: #ff9999; max-width: 50px;}
+        .act-btn:hover { background: #333; }
+
+        /* --- ACTIVITY SETTINGS SCREEN --- */
+        #activity-settings {
+            display: none;
+            width: 100%; height: 100%;
+            background: #222;
+            flex-direction: column;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+        #activity-settings h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #888;
+        }
+        .activity-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+            align-items: center;
+        }
+        .activity-row input[type="text"] {
+            flex: 1;
+            width: auto;
+            text-align: left;
+            min-width: 0;
+        }
+        .activity-row input.url-input {
+            flex: 2;
+        }
+        .activity-row input::placeholder {
+            color: #666;
+        }
+        #activity-settings .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        #activity-settings button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        #activity-settings .save-btn {
+            background: var(--c-blue);
+            color: white;
+        }
+        #activity-settings .cancel-btn {
+            background: #444;
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="setup">
+        <div class="setup-row">
+            <div class="setup-group">
+                <label>Flow</label>
+                <input type="number" id="inp-focus" value="25" oninput="updateExplanation()">
+            </div>
+            <div class="setup-group">
+                <label>Habit</label>
+                <input type="number" id="inp-habit" value="60" oninput="updateExplanation()">
+            </div>
+            <button class="start-btn" onclick="start()">Start</button>
+            <button class="settings-btn" onclick="showActivitySettings()">⚙️</button>
+        </div>
+        <div class="setup-explanation" id="explanation">
+            A "pomodoro" timer set to <span id="flow-mins">25</span> minutes to help you get into flow, combined with a timer set to <span id="habit-mins">60</span> minutes to remind you to start an energizing break habit.
+        </div>
+    </div>
+
+    <div id="timer-ui" onclick="stop()">
+        <div id="progress-bar"></div>
+        <div id="marker-focus" class="marker"></div>
+        <div id="marker-habit" class="marker"></div>
+        <div id="tick-container"></div>
+        <div id="label-flow" class="zone-label">FLOW</div>
+        <div id="label-habit" class="zone-label">HABIT</div>
+        <div id="elapsed-timer">0:00</div>
+    </div>
+
+    <div id="activity-menu"></div>
+
+    <div id="activity-settings">
+        <h3>Break Activities</h3>
+        <div id="activity-rows"></div>
+        <div class="btn-row">
+            <button class="save-btn" onclick="saveActivities()">Save</button>
+            <button class="cancel-btn" onclick="showSetup()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // --- LOGIC ---
+        let timer = null;
+        let startTime = 0;
+        let focusMins = 25;
+        let habitMins = 60;
+        let scaleMins = 90; // 150% of habit
+
+        // Default activities
+        const defaultActivities = [
+            { name: 'Hacksack', url: '' },
+            { name: 'Dance Party', url: '' },
+            { name: 'Stretch', url: '' },
+            { name: 'Squats', url: '' }
+        ];
+
+        function getActivities() {
+            const stored = localStorage.getItem('habitflow-activities');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch (e) {
+                    return defaultActivities;
+                }
+            }
+            return defaultActivities;
+        }
+
+        function saveActivitiesToStorage(activities) {
+            localStorage.setItem('habitflow-activities', JSON.stringify(activities));
+        }
+
+        const elSetup = document.getElementById('setup');
+        const elTimer = document.getElementById('timer-ui');
+        const elMenu = document.getElementById('activity-menu');
+        const elSettings = document.getElementById('activity-settings');
+        const bar = document.getElementById('progress-bar');
+        const tickContainer = document.getElementById('tick-container');
+        const labelFlow = document.getElementById('label-flow');
+        const labelHabit = document.getElementById('label-habit');
+        const elapsedTimer = document.getElementById('elapsed-timer');
+
+        function updateExplanation() {
+            const flowVal = document.getElementById('inp-focus').value || 25;
+            const habitVal = document.getElementById('inp-habit').value || 60;
+            document.getElementById('flow-mins').innerText = flowVal;
+            document.getElementById('habit-mins').innerText = habitVal;
+        }
+
+        function renderActivityMenu() {
+            const activities = getActivities();
+            elMenu.innerHTML = '';
+            activities.forEach((act, idx) => {
+                if (act.name.trim()) {
+                    const btn = document.createElement('button');
+                    btn.className = 'act-btn';
+                    btn.textContent = act.name;
+                    btn.onclick = () => done(act.url);
+                    elMenu.appendChild(btn);
+                }
+            });
+            // Add settings button
+            const settingsBtn = document.createElement('button');
+            settingsBtn.className = 'act-btn';
+            settingsBtn.textContent = '⚙️';
+            settingsBtn.onclick = showSetup;
+            elMenu.appendChild(settingsBtn);
+        }
+
+        function createTickMarks() {
+            tickContainer.innerHTML = '';
+            const totalMins = Math.ceil(scaleMins);
+            for (let m = 1; m <= totalMins; m++) {
+                const tick = document.createElement('div');
+                tick.className = 'tick ' + (m % 5 === 0 ? 'tick-5min' : 'tick-1min');
+                tick.style.left = ((m / scaleMins) * 100) + '%';
+                tickContainer.appendChild(tick);
+            }
+        }
+
+        function start() {
+            // Get inputs
+            focusMins = parseInt(document.getElementById('inp-focus').value) || 25;
+            habitMins = parseInt(document.getElementById('inp-habit').value) || 60;
+            scaleMins = habitMins * 1.5;
+
+            // Set Markers
+            const focusPct = (focusMins / scaleMins) * 100;
+            const habitPct = (habitMins / scaleMins) * 100;
+            document.getElementById('marker-focus').style.left = focusPct + '%';
+            document.getElementById('marker-habit').style.left = habitPct + '%';
+
+            // Position zone labels (centered in their zones)
+            // Zone 1: FLOW (0 to focusPct)
+            labelFlow.style.left = '0';
+            labelFlow.style.width = focusPct + '%';
+            // Zone 2: elapsed timer (focusPct to habitPct)
+            elapsedTimer.style.left = focusPct + '%';
+            elapsedTimer.style.width = (habitPct - focusPct) + '%';
+            // Zone 3: HABIT (habitPct to 100%)
+            labelHabit.style.left = habitPct + '%';
+            labelHabit.style.width = (100 - habitPct) + '%';
+
+            // Create tick marks
+            createTickMarks();
+
+            // Reset UI
+            bar.className = '';
+            bar.style.width = '0%';
+            bar.style.backgroundColor = 'var(--c-blue)';
+            elapsedTimer.innerText = "0:00";
+
+            // Switch Screens
+            elSetup.style.display = 'none';
+            elMenu.style.display = 'none';
+            elSettings.style.display = 'none';
+            elTimer.style.display = 'block';
+
+            // Start Timer
+            startTime = Date.now();
+            if(timer) clearInterval(timer);
+            timer = setInterval(tick, 1000);
+            tick();
+        }
+
+        function tick() {
+            const now = Date.now();
+            const elapsed = (now - startTime) / 60000; // minutes
+            const elapsedSecs = Math.floor((now - startTime) / 1000);
+
+            // Update elapsed timer
+            const mins = Math.floor(elapsedSecs / 60);
+            const secs = elapsedSecs % 60;
+            elapsedTimer.innerText = mins + ':' + (secs < 10 ? '0' : '') + secs;
+
+            // Width (Capped at 100%)
+            let width = (elapsed / scaleMins) * 100;
+            if (width > 100) width = 100;
+            bar.style.width = width + '%';
+
+            // Color Stages
+            if (elapsed < focusMins) {
+                // ZONE 1: Flow (Blue)
+                bar.style.backgroundColor = 'var(--c-blue)';
+
+            } else if (elapsed < habitMins) {
+                // ZONE 2: Extension (Purple)
+                bar.style.backgroundColor = 'var(--c-purple)';
+
+            } else if (elapsed < scaleMins) {
+                // ZONE 3: Overdue (Red)
+                bar.style.backgroundColor = 'var(--c-red)';
+                bar.classList.remove('flashing'); // ensure no flash yet
+
+            } else {
+                // ZONE 4: Critical (Flashing Purple/Red)
+                if (!bar.classList.contains('flashing')) {
+                    bar.classList.add('flashing');
+                }
+            }
+        }
+
+        function stop() {
+            clearInterval(timer);
+            renderActivityMenu();
+            elTimer.style.display = 'none';
+            elMenu.style.display = 'flex'; // Use flex for row layout
+        }
+
+        function done(url) {
+            if (url && url.trim()) {
+                window.open(url, '_blank', 'width=800,height=600');
+            }
+            showSetup();
+        }
+
+        function showSetup() {
+            clearInterval(timer);
+            elMenu.style.display = 'none';
+            elSettings.style.display = 'none';
+            elSetup.style.display = 'flex';
+        }
+
+        function showActivitySettings() {
+            elSetup.style.display = 'none';
+            elMenu.style.display = 'none';
+            elSettings.style.display = 'flex';
+
+            const activities = getActivities();
+            const rowsContainer = document.getElementById('activity-rows');
+            rowsContainer.innerHTML = '';
+
+            for (let i = 0; i < 4; i++) {
+                const act = activities[i] || { name: '', url: '' };
+                const row = document.createElement('div');
+                row.className = 'activity-row';
+                row.innerHTML = `
+                    <input type="text" class="name-input" placeholder="Activity name" value="${act.name || ''}">
+                    <input type="text" class="url-input" placeholder="URL (optional)" value="${act.url || ''}">
+                `;
+                rowsContainer.appendChild(row);
+            }
+        }
+
+        function saveActivities() {
+            const rows = document.querySelectorAll('.activity-row');
+            const activities = [];
+            rows.forEach(row => {
+                const name = row.querySelector('.name-input').value.trim();
+                const url = row.querySelector('.url-input').value.trim();
+                activities.push({ name, url });
+            });
+            saveActivitiesToStorage(activities);
+            showSetup();
+        }
+
+        // Initialize activity menu on load
+        renderActivityMenu();
+    </script>
+</body>
+</html>

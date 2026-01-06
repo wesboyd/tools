@@ -1,0 +1,53 @@
+# Tools Repository
+
+A collection of single-page HTML personal web tools.
+
+## Design Principles
+
+Following patterns from Simon Willison's "Things I've Learned Building HTML Tools":
+
+### Single-File Architecture
+- Each tool is ONE self-contained HTML file with inline CSS and JavaScript
+- No build steps, no npm, no React or frameworks requiring compilation
+- Keep code compact (few hundred lines) so it's easy to read, understand, and modify
+- Load external libraries from CDNs (cdnjs, jsDelivr) when needed
+
+### State Management
+- Use URL hash fragments for shareable/bookmarkable state
+- Use localStorage for API keys and larger persistent state
+- Avoid server-side dependencies
+
+### Input/Output Patterns
+- Embrace copy-paste workflows: accept pasted content, transform it, enable clipboard copy
+- Use `<input type="file">` for local file access
+- Generate downloadable files client-side when needed
+- Leverage rich clipboard handling (text, HTML, images, files)
+
+### API Integration
+- Prefer CORS-enabled APIs (GitHub raw content, PyPI, iNaturalist, Bluesky, Mastodon)
+- Store API keys in localStorage, not in code
+- Call LLM APIs directly from browser when appropriate
+
+### Mobile/PWA Support
+- Include viewport meta tags for mobile usability
+- Add apple-mobile-web-app meta tags for iOS home screen support
+- Consider touch interactions and responsive design
+
+### Advanced Capabilities (when needed)
+- Pyodide for running Python in browser via WebAssembly
+- Existing WASM libraries (Tesseract.js for OCR, etc.)
+
+## Development Workflow
+
+1. Prototype with LLM artifacts (Claude, ChatGPT Canvas)
+2. Iterate with coding agents for complex features
+3. Reference existing tools in the repo as examples when building new ones
+4. Host via GitHub Pages for permanent, reliable distribution
+
+## File Naming
+
+Use descriptive, lowercase names: `tool-name.html`
+
+## Existing Tools
+
+- `habit.html` - HabitFlow: Pomodoro-style focus timer with movement break reminders
